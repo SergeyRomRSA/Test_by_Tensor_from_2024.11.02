@@ -6,12 +6,9 @@ import json
 import zipfile
 from datetime import datetime as dt
 import os.path
-from os import getcwd, chmod, makedirs, rmdir, walk
+from os import getcwd, walk
 
-from shutil import move, rmtree
-
-import requests
-
+from shutil import move
 class Case2:
 
     repository: str
@@ -73,9 +70,6 @@ class Case2:
 
                     zf.write(fp, arcname=os.path.relpath(fp, start=self.local_path))
 
-
-
-    
 
 if __name__ == "__main__":
     a = "https://github.com/paulbouwer/hello-kubernetes.git"
