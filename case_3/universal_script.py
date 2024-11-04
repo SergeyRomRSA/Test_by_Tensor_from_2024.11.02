@@ -33,7 +33,7 @@ class Case3:
         print(self.data)
         pass
 
-    #
+    # Генерация "версий" по маске
     def generation_set(self, value: str):
         temp = value.split("*")
         value = temp[0]

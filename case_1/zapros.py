@@ -13,7 +13,7 @@ class Case1:
         self.url = f"https://yandex.com/time/sync.json?geo={id_geo}"
         pass
 
-    #
+    # Запрос
     def request_to_url(self):
         response = requests.get(self.url)
         if response.status_code == 200:
@@ -23,7 +23,7 @@ class Case1:
             self.data = f"Ошибка при запросе: {response.status_code}"
             return False
     
-    #
+    # Расчет интервала
     def calc_interval(self):
         interval = datetime.now().timestamp()
         if self.request_to_url():
@@ -32,7 +32,7 @@ class Case1:
             interval = -1
         return interval
 
-    #
+    # Печать в консоль данных, полученные в запросе
     def print_to_console(self):
         if self.request_to_url():
             print("Вывод в сыром виде:")
@@ -42,7 +42,7 @@ class Case1:
         else:
             print(self.data)
     
-    #
+    # Вывод в консоль времени и временной зоны из запроса
     def print_time(self):
         if self.request_to_url():
             tz_geo = self.data["clocks"][f"{self.id_geo}"]["offsetString"][3:-3]
@@ -56,7 +56,7 @@ class Case1:
         else:
             print(self.data)
     
-    #
+    # Интервал
     def print_interval(self, iter=1):
         if iter < 1:
             print("Недопустимо")
