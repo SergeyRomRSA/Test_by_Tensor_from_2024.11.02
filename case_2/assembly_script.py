@@ -5,7 +5,7 @@ import tempfile
 import json
 import zipfile
 from datetime import datetime as dt
-import os.path
+import os.path as osp
 from os import getcwd, walk
 
 from shutil import move
@@ -14,31 +14,25 @@ class Case2:
     repository: str
     relative_path: str
     version: str
-    local_path: str
     file_version: str
+    temp_dir: object
 
     def __init__(self, repository, relative_path, version) -> None:
         self.repository = repository
-        self.relative_path = ("" if relative_path[0]== "/" else "/") + relative_path
+        self.relative_path = relative_path
         self.version = version
-        self.local_path = getcwd() + "/temp"
-        self.file_version = "/version.json"
+        self.file_version = "version.json"
         self.extention = {".py": -3, ".js": -3, ".sh": -3}
         pass
 
     def __call__(self):
-        self.selection_repository()
-        self.create_file_version()
-        self.dir_to_zip()
-        pass
-
-    #
-    def selection_repository(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            subprocess.run(["git", "clone", self.repository, temp_dir])
-            move((temp_dir + self.relative_path), (self.local_path + self.relative_path))
+        with tempfile.TemporaryDirectory() as self.temp_dir:
+            subprocess.run(["git", "clone", self.repository, self.temp_dir])
+            self.create_file_version()
+            self.dir_to_zip()
+            
     
-    #
+    # Создание файла кофигурации
     def create_file_version(self):
         result = {}
 
@@ -46,29 +40,33 @@ class Case2:
         result["version"] = f"{self.version}"
         result["files"] = self.filter_file_extention()
 
-        with open(self.local_path + self.relative_path + self.file_version, "w") as file:
+        file_path = osp.join(self.temp_dir, self.relative_path, self.file_version)
+
+        with open(file_path, "w") as file:
             file.write(json.dumps(result))
     
-    #
+    # Фильтр на расширение файлов
     def filter_file_extention(self):
-        temp = []
+        array = []
+        temp_path = osp.join(self.temp_dir, self.relative_path)
         
-        for _, _, files in walk(self.local_path + self.relative_path):
+        for _, _, files in walk(temp_path):
             for file in files:
                 for key in self.extention.keys():
                     if key == file[self.extention[key]:]:
-                        temp.append(file)
-        return temp
+                        array.append(file)
+        return array
     
-    #
+    # Упаковка директории в архив
     def dir_to_zip(self):
         name_zip = self.relative_path[(self.relative_path.rfind("/") + 1):] + dt.now().strftime("%d%m%Y") + ".zip"
+        # name_zip = osp.join(getcwd(), name_zip)
         with zipfile.ZipFile(name_zip, "w", zipfile.ZIP_DEFLATED) as zf:
-            for root, _, files in walk(self.local_path):
+            temp_path = osp.join(self.temp_dir, self.relative_path)
+            for root, _, files in walk(temp_path):
                 for file in files:
-                    fp = os.path.join(root, file)
-
-                    zf.write(fp, arcname=os.path.relpath(fp, start=self.local_path))
+                    fp = osp.join(root, file)
+                    zf.write(fp, arcname=osp.relpath(fp, start=self.temp_dir))
 
 
 if __name__ == "__main__":
