@@ -4,10 +4,11 @@ import subprocess
 import tempfile
 import json
 import zipfile
-from datetime import datetime as dt
+import logging
 import os.path as osp
 from os import walk
-import logging
+from datetime import datetime as dt
+
 
 class Case2:
 
@@ -15,49 +16,53 @@ class Case2:
     relative_path: str
     version: str
     file_version: str
+    extention: dict
+    temp_dir: str
     file_logs: str
-    temp_dir: object
-    work_logs: object
+    work_logs: logging.Logger
 
-    def __init__(self, repository, relative_path, version) -> None:
+    def __init__(self, repository: str, relative_path: str, version: str) -> None:
+        """Инициализация класса с ссылкой на репозиторий, относительным путем и версией."""
         self.repository = repository
         self.relative_path = relative_path
         self.version = version
         self.file_version = "version.json"
         self.extention = {".py": -3, ".js": -3, ".sh": -3}
         self.create_logger()
-        pass
 
-    def __call__(self):
+    def __call__(self) -> None:
+        """Основной метод для выполнения процесса обработки репозитория."""
         self.work_logs.info("Создание временной файловой области")
         with tempfile.TemporaryDirectory() as self.temp_dir:
             self.work_logs.info(f"Скачивание репозитория {self.repository}")
-            subprocess.run(["git", "clone", self.repository, self.temp_dir])
-            self.work_logs.info(f"Репозиторий скачан")
-            self.create_file_version()
-            self.dir_to_zip()
+            try:
+                subprocess.run(["git", "clone", self.repository, self.temp_dir])
+                self.work_logs.info(f"Репозиторий скачан")
+                self.create_file_version()
+                self.dir_to_zip()
+            except subprocess.CalledProcessError as scp:
+                self.work_logs.error(f"Ошибка при скачивании репозитория: {scp}")
         self.work_logs.info("Временная файловая область удалена")
-        pass
-            
-    # Создание файла кофигурации
-    def create_file_version(self):
-        self.work_logs.info(f"Создание файла конфигурации {self.file_version}")
-        result = {}
 
-        result["name"] = "hello world"
-        result["version"] = f"{self.version}"
-        result["files"] = self.filter_file_extention()
+    def create_file_version(self) -> None:
+        """Создает файл конфигурации с версией и списком файлов."""
+        self.work_logs.info(f"Создание файла конфигурации {self.file_version}")
+        result = {
+            "name": "hello world",
+            "version": f"{self.version}",
+            "files": self.filter_file_extention()
+        }
 
         file_path = osp.join(self.temp_dir, self.relative_path, self.file_version)
 
         with open(file_path, "w") as file:
-            file.write(json.dumps(result))
+            # file.write(json.dumps(result))
+            json.dump(result, file, ensure_ascii=False, indent=4)
 
         self.work_logs.info("Файл конфигурации создан")
-        pass
-    
-    # Фильтр на расширение файлов
-    def filter_file_extention(self):
+
+    def filter_file_extention(self) -> list:
+        """Фильтр файлов по заданным расширениям."""
         self.work_logs.info("Фильтрация файлов согласно расширению")
         array = []
         temp_path = osp.join(self.temp_dir, self.relative_path)
@@ -68,13 +73,12 @@ class Case2:
                     if key == file[self.extention[key]:]:
                         array.append(file)
         
-        self.work_logs.info("Фильтрация окончена")
+        self.work_logs.info("Фильтрация завершена")
         return array
     
-    # Упаковка директории в архив
-    def dir_to_zip(self):
-        name_zip = f"{self.relative_path[(self.relative_path.rfind('/') + 1):]}{dt.now().strftime('%d%m%Y')}.zip"
-        # name_zip = osp.join(getcwd(), name_zip)
+    def dir_to_zip(self) -> None:
+        """Упаковка директории в zip-архив."""
+        name_zip = f"{self.relative_path.split('/')[-1]}{dt.now().strftime('%d%m%Y')}.zip"
         self.work_logs.info(f"Создание архива {name_zip}")
 
         with zipfile.ZipFile(name_zip, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -86,19 +90,17 @@ class Case2:
         
         self.work_logs.info(f"Архив создан")
     
-    # Настройка логирования
     def create_logger(self):
+        """Настройка логирования."""
         self.work_logs = logging.getLogger("case_2")
         self.work_logs.setLevel(logging.INFO)
 
-        handler = logging.FileHandler(f"case_2_logs.log", mode="w", encoding='utf-8')
+        handler = logging.FileHandler(f"case_2.log", mode="w", encoding='utf-8')
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
         handler.setFormatter(formatter)
         self.work_logs.addHandler(handler)
 
         self.work_logs.info("Настроено логирование...")
-
-
 
 if __name__ == "__main__":
     a = "https://github.com/paulbouwer/hello-kubernetes.git"

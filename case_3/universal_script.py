@@ -10,40 +10,44 @@ class Case3:
     collection: dict
     data: list
 
-    def __init__(self, version, filename) -> None:
+    def __init__(self, version: str, filename: str) -> None:
+        """Инициализация класса с версией и именем файла."""
         self.version = version
         self.filename = filename
         self.data = []
-        self.rni = lambda: randint(0,9)
-        pass
 
-    def __call__(self):
+    def __call__(self) -> None:
+        """Основной метод для чтения данных из файла и обработки коллекции."""
         with open(self.filename, "r") as file:
             self.collection = json.load(file)
         
-        for i in self.collection.values():
-            self.data.append(self.generation_set(i))
-            self.data.append(self.generation_set(i))
+        for value in self.collection.values():
+            self.data.append(self.generation_set(value))
+            self.data.append(self.generation_set(value))
     
         self.data = sorted(self.data)
         print("Отсортированный список:")
         print(self.data)
+
         self.data = [i for i in self.data if i < self.version]
         print(f"Список меньше {self.version}:")
         print(self.data)
-        pass
+    
+    @staticmethod
+    def rni() -> int:
+        """Генерирует случайное число от 0 до 9."""
+        return randint(0,9)
 
-    # Генерация "версий" по маске
-    def generation_set(self, value: str):
+    def generation_set(self, value: str) -> str:
+        """Генерация "версии" по маске, добавляя случайные цифры."""
         temp = value.split("*")
-        value = temp[0]
+        result = temp[0]
 
-        for i in temp[1:]:
-            value += str(self.rni())
-            value += i
+        for part in temp[1:]:
+            result += str(self.rni())
+            result += part
         
-        return value
-
+        return result
 
 if __name__ == "__main__":
     a = "3.4.5"
