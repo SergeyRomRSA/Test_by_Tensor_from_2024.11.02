@@ -16,7 +16,7 @@ class Case2:
     relative_path: str
     version: str
     file_version: str
-    extention: dict
+    extention: list
     temp_dir: str
     file_logs: str
     work_logs: logging.Logger
@@ -27,7 +27,7 @@ class Case2:
         self.relative_path = relative_path
         self.version = version
         self.file_version = "version.json"
-        self.extention = {".py": -3, ".js": -3, ".sh": -3}
+        self.extention = [".py", ".js", ".sh"]
         self.create_logger()
 
     def __call__(self) -> None:
@@ -69,8 +69,8 @@ class Case2:
         
         for _, _, files in walk(temp_path):
             for file in files:
-                for key in self.extention.keys():
-                    if key == file[self.extention[key]:]:
+                for value in self.extention:
+                    if file.endswith(value):
                         array.append(file)
         
         self.work_logs.info("Фильтрация завершена")
